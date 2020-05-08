@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // 制御されます。アセンブリに関連付けられている情報を変更するには、
 // これらの属性値を変更してください。
 [assembly: AssemblyTitle("yukkuri_lib")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Aquestalkが64bitで使える。")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("kokkiemouse")]
 [assembly: AssemblyProduct("yukkuri_lib")]
