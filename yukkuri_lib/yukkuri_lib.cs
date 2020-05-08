@@ -14,6 +14,11 @@ using yukkuri_lib_interface;
 
 namespace yukkuri_lib
 {
+    /// <summary>
+    /// <see cref="yukkuri_lib"/>のコア部分。
+    /// usingで使うといいよ。
+    /// <see cref="IDisposable"/>を継承している。
+    /// </summary>
     public class yukkuri_lib : IDisposable
     {
         private yukkuri_lib_interface.yukkuri_lib_interface yukkui=null;
@@ -22,30 +27,19 @@ namespace yukkuri_lib
         /// <see cref="yukkuri_lib"/> のコンストラクタ
         /// </summary>
         /// <param name="dll_path">使うAquestalkのDLLパス</param>
+        /// <param name="application_id"> 独自のid。競合防止のため。</param>
         public yukkuri_lib(string dll_path,string application_id)
         {
-
-            Thread thread_dllload = new Thread(new ThreadStart(() =>
-            {
-                while (true);
-            }));
-
-            Thread thread_prepare = new Thread(new ThreadStart(() =>
-            {
-                while (true)
-                {
-
-                }
-            }));
-            string dll_name = Path.GetFileName(Path.GetDirectoryName(dll_path));
-            ProcessStartInfo psinfo = new ProcessStartInfo();
-            psinfo.FileName = System.AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\') + "\\yukkuri_86_wrapper.exe";
-            psinfo.UseShellExecute = false;
-            psinfo.CreateNoWindow = true;
-            psinfo.Arguments = dll_name + '|' + application_id;
+            string dll_name = Path.GetFileName(Path.GetDirectoryName(dll_path));    //dllのフォルダ名を取得。
+            ProcessStartInfo psinfo = new ProcessStartInfo();   //子プロセス用。
+            psinfo.FileName = System.AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\') + "\\yukkuri_86_wrapper.exe";  //子プロセスのファイル名。
+            psinfo.UseShellExecute = false; //シェルは使わん。
+            psinfo.CreateNoWindow = true;   //ウィンドウも作らん。
+            string dtnow = DateTime.Now.ToString("ddHHmmssfff");    //現在時刻を取得
+            psinfo.Arguments = dll_name + '|' + application_id + dtnow; //現在時刻をもとに作り、競合を回避。。
             System.Collections.IDictionary properties =
-                new System.Collections.Hashtable();
-            properties["portName"] = application_id + "_yukkuri_lib_kokkiemouse_" + dll_name;
+                new System.Collections.Hashtable(); //ハッシュテーブルを作成。
+            properties["portName"] = application_id + dtnow + "_yukkuri_lib_kokkiemouse_" + dll_name;   //ポートネーム生成。
             properties["exclusiveAddressUse"] = false;
             properties["name"] = dll_name;
 
@@ -53,41 +47,41 @@ namespace yukkuri_lib
                 new BinaryServerFormatterSinkProvider
                 {
                     TypeFilterLevel=System.Runtime.Serialization.Formatters.TypeFilterLevel.Full,
-                });
-            ChannelServices.RegisterChannel(serverChannel, true);
+                });//チャンネル生成。
+            ChannelServices.RegisterChannel(serverChannel, true);   //チャンネル登録
             /*yukkui = (yukkuri_lib_interface.yukkuri_lib_interface)Activator.GetObject(typeof(yukkuri_lib_interface.yukkuri_lib_interface),
                 "ipc://yukkuri_lib_kokkiemouse/" + dll_name);
             */
-            CountdownEvent inited_ev = new CountdownEvent(1);
-            yukkui = new yukkuri_lib_interface.yukkuri_lib_interface();
-            yukkui.Oninit += new yukkuri_lib_interface.init_delegate(() =>
+            CountdownEvent inited_ev = new CountdownEvent(1);   //待機用。
+            yukkui = new yukkuri_lib_interface.yukkuri_lib_interface(); //インターフェースを生成。
+            yukkui.Oninit += new yukkuri_lib_interface.init_delegate(() =>          //初期化後に実行される
             {
-                inited_ev.Signal();
+                inited_ev.Signal(); //処理を再開。
             }
             );
-            CountdownEvent loaded_dll_ev = new CountdownEvent(1);
-            yukkui.OnDllLoaded += new dll_loaded_delegate(() =>
+            CountdownEvent loaded_dll_ev = new CountdownEvent(1);   //dllを読み込むまでの待機用。
+            yukkui.OnDllLoaded += new dll_loaded_delegate(() => //dllが読み込まれると実行
             {
-                loaded_dll_ev.Signal();
+                loaded_dll_ev.Signal(); //処理を再開。
             });
-            RemotingServices.Marshal(yukkui, dll_name, typeof(yukkuri_lib_interface.yukkuri_lib_interface));
+            RemotingServices.Marshal(yukkui, dll_name, typeof(yukkuri_lib_interface.yukkuri_lib_interface));    //定義したオブジェクトを登録。
             System.Runtime.Remoting.Channels.ChannelDataStore channelData =
            (System.Runtime.Remoting.Channels.ChannelDataStore)
            serverChannel.ChannelData;
             foreach (string uri in channelData.ChannelUris)
             {
-                Debug.WriteLine("The channel URI is {0}.", uri);
+                Debug.WriteLine("The channel URI is {0}.", uri);    //デバッグ用。
             }
-            Process.Start(psinfo);
-            inited_ev.Wait();
+            Process.Start(psinfo);//子プロセス起動。
+            inited_ev.Wait();   //初期化が完了するまで待機。
 
-            yukkui.DllLoad_to_client(dll_path);
+            yukkui.DllLoad_to_client(dll_path); //dllを読み込み。
             
 
         }
         /// <summary>
         /// Aquestalkに話させるやつ。
-        /// byte型で帰ってくるよ。
+        /// <see cref="byte"/>配列で帰ってくるよ。
         /// </summary>
         /// <param name="speed">スピード</param>
         /// <param name="textd">テキスト</param>
@@ -95,39 +89,49 @@ namespace yukkuri_lib
         /// <returns>wavファイル</returns>
         public byte[] speak_wav(int speed,string textd,int pitch)
         {
-            yukkuri_lib_interface_EventClass evc = new yukkuri_lib_interface_EventClass(textd, speed);
-            byte[] wavd= yukkui.Speak_to_client(evc);
-            uint samplingRate = BitConverter.ToUInt32(wavd, 24);
-            uint dataRate = BitConverter.ToUInt32(wavd, 28);
-            float pct_to = (float)pitch / 100;
-            float samplingRatef = samplingRate;
-            samplingRatef *= pct_to;
-            samplingRate = (uint)samplingRatef;
-            float dataRatef = dataRate;
-            dataRatef *= pct_to;
-            dataRate = (uint)dataRatef;
+            yukkuri_lib_interface_EventClass evc = new yukkuri_lib_interface_EventClass(textd, speed);  //32bitの方に与えるパラメータを初期化。
+            byte[] wavd= yukkui.Speak_to_client(evc);   //32bit側を呼び出し。byte配列でwavファイルが返ってくる。
+            uint samplingRate = BitConverter.ToUInt32(wavd, 24);//サンプリングレートを算出。
+            uint dataRate = BitConverter.ToUInt32(wavd, 28);//データレートを算出。
+            float pct_to = (float)pitch / 100;  //ピッチの割合を計算。
+            float samplingRatef = samplingRate; //サンプリング周波数をfloatに。
+            samplingRatef *= pct_to;    //サンプリング周波数をpitchで変化させる。
+            samplingRate = (uint)samplingRatef;//floatなサンプリング周波数をintへコンバート。
+            float dataRatef = dataRate; //データレートをfloatへ。
+            dataRatef *= pct_to;//データレートをpitchで変化させる。
+            dataRate = (uint)dataRatef;//データレートをfloatからintへ。
             byte[] samplingRateBytes = BitConverter.GetBytes(samplingRate);
             byte[] dataRateBytes = BitConverter.GetBytes(dataRate);
             Array.Copy(samplingRateBytes, 0, wavd, 24, 4);
             Array.Copy(dataRateBytes, 0, wavd, 28, 4);
-            return wavd;
+            return wavd;    //改造版wavを返す。
 
         }
+        /// <summary>
+        /// 開放用。
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
+        /// <summary>
+        /// 開放用。
+        /// </summary>
+        /// <param name="disposing">使わない。</param>
         protected virtual void Dispose(bool disposing)
         {
             if(!_disposed)
             {
-                yukkui.Close_to_client();
+                yukkui.Close_to_client();   //clientを落とす。
                 _disposed = true;
 
 
             }
         }
+        /// <summary>
+        /// 開放用。
+        /// </summary>
         ~yukkuri_lib()
         {
             Dispose(false);
