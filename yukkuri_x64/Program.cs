@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Media;
 using System.Text;
 using System.Threading.Tasks;
+using yukkuri_lib;
 
 namespace yukkuri_x64
 {
@@ -12,20 +14,21 @@ namespace yukkuri_x64
     {
         static void Main(string[] args)
         {
+            /*
             using (yukkuri_lib.yukkuri_lib yukkuri_f1 = new yukkuri_lib.yukkuri_lib("Aquestalk\\f1\\Aquestalk.dll","test"))
             {
                 using (yukkuri_lib.yukkuri_lib yukkuri_f2 = new yukkuri_lib.yukkuri_lib("Aquestalk\\f2\\Aquestalk.dll","test"))
                 {
                     using (yukkuri_lib.yukkuri_lib yukkuri_m1 = new yukkuri_lib.yukkuri_lib("Aquestalk\\m1\\Aquestalk.dll", "test"))
                     {
-                        using (yukkuri_lib.yukkuri_lib yukkuri_r1 = new yukkuri_lib.yukkuri_lib("Aquestalk\\r1\\Aquestalk.dll", "test"))
+                        using (yukkuri_lib.yukkuri_lib yukkuri_imd1 = new yukkuri_lib.yukkuri_lib("Aquestalk\\imd1\\Aquestalk.dll", "test"))
                         {
                             using (yukkuri_lib.yukkuri_lib yukkuri_jgr = new yukkuri_lib.yukkuri_lib("Aquestalk\\jgr\\Aquestalk.dll", "test"))
                             {
                                 playaq(100, 100, "はげ", yukkuri_f1);
                                 playaq(100, 100, "はげ", yukkuri_f2);
-                                playaq(100, 100, "はげ", yukkuri_m1);
-                                playaq(100, 100, "はげ", yukkuri_r1);
+                                playaq(100, 100, "aaa", yukkuri_m1);
+                                playaq(100, 100, "はげ", yukkuri_imd1);
                                 playaq(100, 100, "はげ", yukkuri_jgr);
                             }
                         }
@@ -34,11 +37,23 @@ namespace yukkuri_x64
 
 
             }
+            */
+            try
+            {
+                using (yukkuri_lib.yukkuri_lib yukkuri_qa = new yukkuri_lib.yukkuri_lib("Aquestalk\\jgr\\Aquestalk.dll", "test"))
+                {
+                    playaq(100, 100, "ほも", yukkuri_qa);
+                }
+            }
+            catch (Wave_NULLException e)
+            {
+                Console.Error.WriteLine("NULL Error! " + e.Message);
+            }
         }
         static void playaq(int speed,int pitch,string text,yukkuri_lib.yukkuri_lib yklib)
         {
             byte[] wavdata = yklib.speak_wav(speed, text, pitch);
-            if (wavdata.Equals(new byte[] { 0 }))
+            if (wavdata.Length==1)
             {
                 return;
             }

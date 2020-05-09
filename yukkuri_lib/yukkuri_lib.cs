@@ -30,6 +30,10 @@ namespace yukkuri_lib
         /// <param name="application_id"> 独自のid。競合防止のため。</param>
         public yukkuri_lib(string dll_path,string application_id)
         {
+            if (!File.Exists(dll_path))
+            {
+                throw new System.IO.FileNotFoundException("DLL Load failed! " + dll_path + " is not found!");
+            }
             string dll_name = Path.GetFileName(Path.GetDirectoryName(dll_path));    //dllのフォルダ名を取得。
             ProcessStartInfo psinfo = new ProcessStartInfo();   //子プロセス用。
             psinfo.FileName = System.AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\') + "\\yukkuri_86_wrapper.exe";  //子プロセスのファイル名。
@@ -74,8 +78,13 @@ namespace yukkuri_lib
             }
             Process.Start(psinfo);//子プロセス起動。
             inited_ev.Wait();   //初期化が完了するまで待機。
-
-            yukkui.DllLoad_to_client(dll_path); //dllを読み込み。
+            try
+            {
+                yukkui.DllLoad_to_client(dll_path); //dllを読み込み。
+            }catch (Exception)
+            {
+                throw;
+            }
             
 
         }
@@ -87,10 +96,14 @@ namespace yukkuri_lib
         /// <param name="textd">テキスト</param>
         /// <param name="pitch">ピッチ(100で標準)</param>
         /// <returns>wavファイル</returns>
-        public byte[] speak_wav(int speed,string textd,int pitch)
+        public byte[] speak_wav(int speed,string textd,int pitch) 
         {
             yukkuri_lib_interface_EventClass evc = new yukkuri_lib_interface_EventClass(textd, speed);  //32bitの方に与えるパラメータを初期化。
-            byte[] wavd= yukkui.Speak_to_client(evc);   //32bit側を呼び出し。byte配列でwavファイルが返ってくる。
+            yukkuri_lib_interface.SPEAK_RETURN spr = yukkui.Speak_to_client(evc); //32bit側を呼び出し。byte配列でwavファイルが返ってくる。
+            if (spr.error.err_code.Equals(yukkuri_lib_interface.DLL_ERR_CODE.NULLPOINTER_OTHER)){
+                throw new Wave_NULLException(spr.error.message,new System.NullReferenceException());
+            }
+            byte[] wavd = spr.wavdata;
             uint samplingRate = BitConverter.ToUInt32(wavd, 24);//サンプリングレートを算出。
             uint dataRate = BitConverter.ToUInt32(wavd, 28);//データレートを算出。
             float pct_to = (float)pitch / 100;  //ピッチの割合を計算。
@@ -123,7 +136,10 @@ namespace yukkuri_lib
         {
             if(!_disposed)
             {
-                yukkui.Close_to_client();   //clientを落とす。
+                if (yukkui!=null)
+                {
+                    yukkui.Close_to_client();   //clientを落とす。
+                }
                 _disposed = true;
 
 

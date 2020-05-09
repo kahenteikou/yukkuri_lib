@@ -12,6 +12,8 @@ using yukkuri_lib_interface;
 using System.Runtime.InteropServices;
 using System.Runtime.Remoting;
 using System.Threading;
+using System.IO;
+
 [assembly: AssemblyKeyFileAttribute("kokkiemouse.snk")]
 
 namespace yukkuri_86_wrapper
@@ -52,12 +54,19 @@ namespace yukkuri_86_wrapper
                 IntPtr wavPtr = aq.AquesTalk_Synthe(koe, speed, out size);  //Aquestalk呼び出し。ポインタが返ってくる。
                 if (wavPtr == IntPtr.Zero)  //ぬるぽなら
                 {
-                    return new byte[] { 0 }; //ゼロを返す。
+                    SPEAK_RETURN spr2 = new SPEAK_RETURN();
+                    spr2.error.err_code = DLL_ERR_CODE.NULLPOINTER_OTHER;
+                    spr2.error.message = "NULL POINTER! \r\n AquesTalk_Synthe";
+                    return spr2;
                 }
                 byte[] wavdata = new byte[size]; //C#側で配列を確保。
                 Marshal.Copy(wavPtr, wavdata, 0, size);//ポインタの中身を配列にコピー。
                 aq.AquesTalk_FreeWave(wavPtr);//ポインタはもういらないしトラブルの元なので即開放
-                return wavdata;//コピーした配列を返す。
+                yukkuri_lib_interface.SPEAK_RETURN spr = new yukkuri_lib_interface.SPEAK_RETURN();
+                spr.error.err_code = yukkuri_lib_interface.DLL_ERR_CODE.NO_ERROR;
+                spr.error.message = "Success!";
+                spr.wavdata = wavdata;
+                return spr;//コピーした配列を返す。
             });
             /*
             yukkuri_inter._run_speak += new yukkuri_lib_interface.yukkuri_lib_interface.CallEventHandler((ref byte[] wav, yukkuri_lib_interface.yukkuri_lib_interface.yukkuri_lib_interface_EventArgs e) =>
@@ -79,8 +88,15 @@ namespace yukkuri_86_wrapper
             */
             ebthink.OnDllLoad += new Dll_load_delegate((yukkuri_lib_interface_dllload_args eargs) =>  //OnDllLoadで呼ばれる。
             {
-                aq = new AquesTalk(eargs.dll_path); //パスをもとにAquestalkをロード。
-                yukkuri_inter.dll_loaded();//ロード完了のイベント送信。
+                try
+                {
+                    aq = new AquesTalk(eargs.dll_path); //パスをもとにAquestalkをロード。
+
+                    yukkuri_inter.dll_loaded();//ロード完了のイベント送信。
+                }catch (IOException e)
+                {
+                    throw;
+                }
             });
             Dll_load_delegate dllldel = new Dll_load_delegate(ebthink.DllLoadtoClient); //delegateを定義。
             SpeakDelegate spd = new SpeakDelegate(ebthink.SpeakCallBackToClient);//delegateを定義。

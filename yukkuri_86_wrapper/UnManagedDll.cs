@@ -77,7 +77,13 @@ namespace yukkuri_86_wrapper
         public UnManagedDll(string dllPath)
         {
             Initialize();
-            this.Load(dllPath);
+            try
+            {
+                this.Load(dllPath);
+            }catch (System.IO.FileNotFoundException e)
+            {
+                throw;
+            }
         }
         /// <summary>
         /// <see cref="UnManagedDll"/> のデストラクタ

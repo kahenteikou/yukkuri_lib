@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
-<package >
+<?xml version="1.0"?>
+<package  xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>$id$</id>
-    <version>1.0.0.1</version>
+    <version>1.0.0.4</version>
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
@@ -11,8 +11,25 @@
     <projectUrl>https://github.com/kokkiemouse/yukkuri_lib/</projectUrl>
     <iconUrl>https://raw.githubusercontent.com/kokkiemouse/yukkuri_lib/master/yukkuri_lib/yukkuri.png</iconUrl>
     <description>Aquestalkが64bitで使える。</description>
+    <dependencies>
+      <dependency id="yukkuri_lib_interface" version="1.0.0.3" />
+    </dependencies>
     <releaseNotes>test release.</releaseNotes>
     <copyright>Copyright kokkiemouse</copyright>
-    <tags>Aquestalk</tags>
+    <tags>Aquestalk</tags>  
   </metadata>
+    <files>
+        <file src="bin\Release\*.exe" target="Aquestalk\Aquestalk\" />
+        <file src="bin\Release\Aquestalk\f1\*.dll" target="Aquestalk\Aquestalk\f1\" />
+        <file src="bin\Release\Aquestalk\f2\*.dll" target="Aquestalk\Aquestalk\f2\" />
+        <file src="bin\Release\Aquestalk\dvd\*.dll" target="Aquestalk\Aquestalk\dvd\" />
+        <file src="bin\Release\Aquestalk\m1\*.dll" target="Aquestalk\Aquestalk\m1\" />
+        <file src="bin\Release\Aquestalk\m2\*.dll" target="Aquestalk\Aquestalk\m2\" />
+        <file src="bin\Release\Aquestalk\imd1\*.dll" target="Aquestalk\Aquestalk\imd1\" />
+        <file src="bin\Release\Aquestalk\jgr\*.dll" target="Aquestalk\Aquestalk\jgr\" />
+        <file src="bin\Release\Aquestalk\r1\*.dll" target="Aquestalk\Aquestalk\r1\" />
+        <file src="yukkuri_lib.props" target="build\" />
+        <file src="yukkuri_lib.targets" target="build\" />
+
+    </files>
 </package>

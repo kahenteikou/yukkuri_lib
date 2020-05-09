@@ -12,7 +12,7 @@ using System.Web.Script.Serialization;
 
 namespace yukkuri_lib_interface
 {
-    public delegate byte[] SpeakDelegate(yukkuri_lib_interface_EventArgs eventargs);
+    public delegate SPEAK_RETURN SpeakDelegate(yukkuri_lib_interface_EventArgs eventargs);
     public delegate void CloseDelegate();
     public delegate void Dll_load_delegate(yukkuri_lib_interface_dllload_args dllargs);
     public delegate void init_delegate();
@@ -48,7 +48,7 @@ namespace yukkuri_lib_interface
         /// </summary>
         /// <param name="evargs">パラメータのオブジェクト</param>
         /// <returns>wavファイルの<see cref="byte"/>配列</returns>
-        public byte[] SpeakCallBackToClient(yukkuri_lib_interface_EventArgs evargs)
+        public SPEAK_RETURN SpeakCallBackToClient(yukkuri_lib_interface_EventArgs evargs)
         {
             return OnSpeak?.Invoke(evargs); //OnSpeakイベントを呼び出し。
         }
@@ -59,7 +59,13 @@ namespace yukkuri_lib_interface
         /// <param name="dargs">DLLファイルに関するオブジェクト</param>
         public void DllLoadtoClient(yukkuri_lib_interface_dllload_args dargs)
         {
-            OnDllLoad?.Invoke(dargs);   //OnDllLoadイベントを呼び出し。
+            try
+            {
+                OnDllLoad?.Invoke(dargs);   //OnDllLoadイベントを呼び出し。
+            }catch (Exception)
+            {
+                throw;
+            }
         }
         /// <summary>
         /// Serverから終了する際に呼ばれるやつ。
@@ -197,6 +203,151 @@ namespace yukkuri_lib_interface
         }
     }
     /// <summary>
+    /// Speakの戻り値
+    /// </summary>
+    [Serializable]
+    public class SPEAK_RETURN
+    {
+        /// <summary>
+        /// エラーに関する構造体。
+        /// </summary>
+        public DLL_LOAD_ERROR error;
+        /// <summary>
+        /// wavファイルの中身。
+        /// </summary>
+        public byte[] wavdata;
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        public SPEAK_RETURN()
+        {
+            error = new DLL_LOAD_ERROR();
+            wavdata = new byte[] { 0 };
+        }
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="_error"> エラー用オブジェ</param>
+        /// <param name="wavdata">データが入った<see cref="byte"/>オブジェクト</param>
+        public SPEAK_RETURN(DLL_LOAD_ERROR _error, byte[] wavdata )
+        {
+            this.error =_error;
+        }
+        /// <summary>
+        /// デシリアライズ用。
+        /// </summary>
+        /// <param name="info">データ処理先。</param>
+        /// <param name="context">使わない。</param>
+        [SecurityPermission(SecurityAction.LinkDemand, SerializationFormatter = true)]
+        protected SPEAK_RETURN(SerializationInfo info, StreamingContext context)
+        {
+            JavaScriptSerializer ser = new JavaScriptSerializer();
+            var json_e = info.GetString("error");
+            error = ser.Deserialize<DLL_LOAD_ERROR>(json_e);
+            var json_b = info.GetString("wavdata");
+            wavdata = ser.Deserialize<byte[]>(json_b);
+        }
+        /// <summary>
+        /// シリアライズ用
+        /// </summary>
+        /// <param name="info">データ</param>
+        /// <param name="context">使わん。</param>
+        [SecurityPermission(SecurityAction.LinkDemand, SerializationFormatter = true)]
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            JavaScriptSerializer ser = new JavaScriptSerializer();
+            var json_e = ser.Serialize(error);
+            var json_b = ser.Serialize(wavdata);
+            info.AddValue("error", json_e);
+            info.AddValue("wavdata", json_b);
+        }
+    }
+    /// <summary>
+    /// DLLのロードエラー用
+    /// </summary>
+    [Serializable]
+    public class DLL_LOAD_ERROR
+    {
+        /// <summary>
+        /// エラーコード
+        /// </summary>
+        public DLL_ERR_CODE err_code;
+        /// <summary>
+        /// エラーメッセージ
+        /// </summary>
+        public string message;
+        /// <summary>
+        ///コンストラクタ
+        /// </summary>
+        public DLL_LOAD_ERROR()
+        {
+            err_code = DLL_ERR_CODE.NO_ERROR;
+            message = "success";
+        }
+
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="err_c">エラーコード</param>
+        /// <param name="message">エラーメッセージ</param>
+        public DLL_LOAD_ERROR(DLL_ERR_CODE err_c,string message)
+        {
+            this.err_code = err_c;
+            this.message = message;
+        }
+        /// <summary>
+        /// デシリアライズ用。
+        /// </summary>
+        /// <param name="info">データ処理先。</param>
+        /// <param name="context">使わない。</param>
+        [SecurityPermission(SecurityAction.LinkDemand, SerializationFormatter = true)]
+        protected DLL_LOAD_ERROR(SerializationInfo info, StreamingContext context)
+        {
+            JavaScriptSerializer ser = new JavaScriptSerializer();
+            var json_e = info.GetString("err_code");
+            var json_m = info.GetString("message");
+            err_code = ser.Deserialize<DLL_ERR_CODE>(json_e);
+            message = ser.Deserialize<string>(json_m);
+        }
+        /// <summary>
+        /// シリアライズ用
+        /// </summary>
+        /// <param name="info">データ</param>
+        /// <param name="context">使わん。</param>
+        [SecurityPermission(SecurityAction.LinkDemand, SerializationFormatter = true)]
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            JavaScriptSerializer ser = new JavaScriptSerializer();
+            var json_e = ser.Serialize(err_code);
+            var json_m = ser.Serialize(message);
+            info.AddValue("err_code", json_e);
+            info.AddValue("message", json_m);
+        }
+
+    }
+    /// <summary>
+    /// <see cref="dll_loaded_delegate"/>のエラーコード
+    /// </summary>
+    public enum DLL_ERR_CODE
+    {
+        /// <summary>
+        /// エラーなし
+        /// </summary>
+        NO_ERROR,
+        /// <summary>
+        /// IOエラー
+        /// </summary>
+        IO_ERROR,
+        /// <summary>
+        /// その他のエラー
+        /// </summary>
+        OTHER_ERROR,
+        /// <summary>
+        /// よくわからないぬるぽ
+        /// </summary>
+        NULLPOINTER_OTHER
+    }
+    /// <summary>
     /// 32bitと64bitをつなぐインターフェース。
     /// <see cref="MarshalByRefObject"/>を継承してる。
     /// </summary>
@@ -209,6 +360,8 @@ namespace yukkuri_lib_interface
         /// 初期化完了後にクライアント(32bit)が呼び出すイベント。
         /// </summary>
         public event init_delegate Oninit;
+
+
         /// <summary>
         /// DLLが読み込まれた後にClient(32bit)が呼び出すイベント。
         /// </summary>
@@ -264,14 +417,17 @@ namespace yukkuri_lib_interface
         /// </summary>
         /// <param name="paramkun">指定する内容。</param>
         /// <returns>wavファイル</returns>
-        public byte[] Speak_to_client(yukkuri_lib_interface_EventClass paramkun)
+        public SPEAK_RETURN Speak_to_client(yukkuri_lib_interface_EventClass paramkun)
         {
             yukkuri_lib_interface_EventArgs evt = new yukkuri_lib_interface_EventArgs(paramkun);    //引数を生成
             foreach(SpeakDelegate listener in eventListeners_speak) 
             {
                 return listener(evt);   //実行する。
             }
-            return new byte[] { 0 };    //エラー時。
+            SPEAK_RETURN spr = new SPEAK_RETURN();
+            spr.error.err_code = DLL_ERR_CODE.OTHER_ERROR;
+            spr.error.message = "Event listener error";
+            return spr;
         }
         /// <summary>
         /// Serverが使用。
@@ -300,7 +456,13 @@ namespace yukkuri_lib_interface
             yukkuri_lib_interface_dllload_args evt = new yukkuri_lib_interface_dllload_args(dllpath);   //イベントの引数を作成。
             foreach (Dll_load_delegate listener in eventListeners_dllload)
             {
-                listener(evt);//実行
+                try
+                {
+                    listener(evt);//実行
+                }catch (Exception)
+                {
+                    throw;
+                }
             }
         }
         /// <summary>
