@@ -68,6 +68,13 @@ namespace yukkuri_lib
             {
                 loaded_dll_ev.Signal(); //処理を再開。
             });
+            yukkui.Ondiscardloop += new Discard_loop(() =>
+            {
+                //そりゃ酢豚だからなんもしないさ。
+#if DEBUG
+                Debug.WriteLine("Stub Timer");
+            #endif
+            });
             RemotingServices.Marshal(yukkui, dll_name, typeof(yukkuri_lib_interface.yukkuri_lib_interface));    //定義したオブジェクトを登録。
             System.Runtime.Remoting.Channels.ChannelDataStore channelData =
            (System.Runtime.Remoting.Channels.ChannelDataStore)
@@ -100,13 +107,13 @@ namespace yukkuri_lib
         {
             yukkuri_lib_interface_EventClass evc = new yukkuri_lib_interface_EventClass(textd, speed);  //32bitの方に与えるパラメータを初期化。
             yukkuri_lib_interface.SPEAK_RETURN spr = yukkui.Speak_to_client(evc); //32bit側を呼び出し。byte配列でwavファイルが返ってくる。
-            if (spr.error.err_code.Equals(yukkuri_lib_interface.DLL_ERR_CODE.NULLPOINTER_OTHER)){
-                throw new Wave_NULLException(spr.error.message,new System.NullReferenceException());
+            if (!spr.error.err_code.Equals(yukkuri_lib_interface.DLL_ERR_CODE.NO_ERROR)){
+                throw new Exception(spr.error.message);
             }
             byte[] wavd = spr.wavdata;
             uint samplingRate = BitConverter.ToUInt32(wavd, 24);//サンプリングレートを算出。
             uint dataRate = BitConverter.ToUInt32(wavd, 28);//データレートを算出。
-            float pct_to = (float)pitch / 100;  //ピッチの割合を計算。
+            float pct_to = (float)pitch / 100;  //ピッチの割合を計算。success
             float samplingRatef = samplingRate; //サンプリング周波数をfloatに。
             samplingRatef *= pct_to;    //サンプリング周波数をpitchで変化させる。
             samplingRate = (uint)samplingRatef;//floatなサンプリング周波数をintへコンバート。

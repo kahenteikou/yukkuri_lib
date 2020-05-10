@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>1.0.0.7</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">LGPL-2.1-or-later</license>
+    <projectUrl>https://github.com/kokkiemouse/yukkuri_lib/</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/kokkiemouse/yukkuri_lib/master/yukkuri_lib/yukkuri.png</iconUrl>
+    <description>依存ライブラリ</description>
+    <releaseNotes>aaaa</releaseNotes>
+    <copyright>Copyright 2020</copyright>
+    <tags>Aquestalk</tags>
+  </metadata>
+</package>

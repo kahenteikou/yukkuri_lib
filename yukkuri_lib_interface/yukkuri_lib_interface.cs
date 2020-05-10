@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -17,6 +18,7 @@ namespace yukkuri_lib_interface
     public delegate void Dll_load_delegate(yukkuri_lib_interface_dllload_args dllargs);
     public delegate void init_delegate();
     public delegate void dll_loaded_delegate();
+    public delegate void Discard_loop();
     /// <summary>
     /// Server(64bit側)からのCallのインターフェース
     /// <see cref="MarshalByRefObject"/>を継承してる。
@@ -345,7 +347,56 @@ namespace yukkuri_lib_interface
         /// <summary>
         /// よくわからないぬるぽ
         /// </summary>
-        NULLPOINTER_OTHER
+        NULLPOINTER_OTHER,
+        /// <summary>
+        /// メモリー不足
+        /// </summary>
+        out_of_memory,
+        /// <summary>
+        /// 定義されていない音声記号
+        /// </summary>
+        undefined_symbol,
+        /// <summary>
+        /// speedに負の数が指定された
+        /// </summary>
+        minus_speed,
+        /// <summary>
+        /// 未定義の区切り記号が検出。
+        /// </summary>
+        Undefined_delimiter_code_detection,
+
+        /// <summary>
+        /// タグの構文が丘people
+        /// </summary>
+        syntax_tag_error,
+        /// <summary>
+        /// タグが長い、あるいは終端記号 > が見つからない。
+        /// </summary>
+        tag_end_error,
+        /// <summary>
+        /// タグの値が丘people
+        /// </summary>
+        tag_value_invalid,
+        /// <summary>
+        /// 話す音声記号が見つからない
+        /// </summary>
+        text_not_found,
+        /// <summary>
+        /// 音声記号列が長すぎる
+        /// </summary>
+        too_long_text,
+        /// <summary>
+        /// 記号が多すぎる
+        /// </summary>
+        too_many_symbol,
+        /// <summary>
+        /// 音声記号列が長すぎる(内部バッファーオーバーー)
+        /// </summary>
+        too_long_text_buffer_over,
+        /// <summary>
+        /// ヒープメモリが不足
+        /// </summary>
+        out_of_heap_memory
     }
     /// <summary>
     /// 32bitと64bitをつなぐインターフェース。
@@ -360,7 +411,10 @@ namespace yukkuri_lib_interface
         /// 初期化完了後にクライアント(32bit)が呼び出すイベント。
         /// </summary>
         public event init_delegate Oninit;
-
+        /// <summary>
+        /// クライアントが破棄防止のため定期的に呼び出すやつ。
+        /// </summary>
+        public event Discard_loop Ondiscardloop;
 
         /// <summary>
         /// DLLが読み込まれた後にClient(32bit)が呼び出すイベント。
@@ -373,6 +427,20 @@ namespace yukkuri_lib_interface
         public void inited()
         {
             Oninit?.Invoke();
+        }
+        /// <summary>
+        /// ClientがDiscard防止のため呼び出す。
+        /// </summary>
+        public void discardkun()
+        {
+            if(Ondiscardloop != null)
+            {
+                Ondiscardloop();
+            }
+            else
+            {
+                Debug.WriteLine("sex");
+            }
         }
         /// <summary>
         /// Clientが呼び出す。
@@ -469,6 +537,8 @@ namespace yukkuri_lib_interface
         /// 勝手に消されないように。
         /// </summary>
         /// <returns>しらん。</returns>
+        /// 
+        [SecurityPermissionAttribute(SecurityAction.Demand, Flags = SecurityPermissionFlag.Infrastructure)]
         public override object InitializeLifetimeService()
         {
             return null;

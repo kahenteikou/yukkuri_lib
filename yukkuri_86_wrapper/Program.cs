@@ -13,6 +13,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Remoting;
 using System.Threading;
 using System.IO;
+using System.Diagnostics;
 
 [assembly: AssemblyKeyFileAttribute("kokkiemouse.snk")]
 
@@ -55,8 +56,82 @@ namespace yukkuri_86_wrapper
                 if (wavPtr == IntPtr.Zero)  //ぬるぽなら
                 {
                     SPEAK_RETURN spr2 = new SPEAK_RETURN();
-                    spr2.error.err_code = DLL_ERR_CODE.NULLPOINTER_OTHER;
-                    spr2.error.message = "NULL POINTER! \r\n AquesTalk_Synthe";
+                    switch (size)
+                    {
+                        case 100:
+                            spr2.error.err_code = DLL_ERR_CODE.OTHER_ERROR;
+                            spr2.error.message = "Other error!";
+                            break;
+                        case 101:
+                            spr2.error.err_code = DLL_ERR_CODE.out_of_memory;
+                            spr2.error.message = "OUT OF MEMORY!";
+                            break;
+                        case 102:
+                            spr2.error.err_code = DLL_ERR_CODE.undefined_symbol;
+                            spr2.error.message = "UNDEFINED_SYMBOL";
+                            break;
+                        case 103:
+                            spr2.error.err_code = DLL_ERR_CODE.minus_speed;
+                            spr2.error.message = "ERROR! SPEED is MINUS!";
+                            break;
+                        case 104:
+                            spr2.error.err_code = DLL_ERR_CODE.Undefined_delimiter_code_detection;
+                            spr2.error.message = "Undefined delimiter code detection!";
+                            break;
+                        case 105:
+                            spr2.error.err_code = DLL_ERR_CODE.undefined_symbol;
+                            spr2.error.message = "UNDEFINED_SYMBOL";
+                            break;
+
+                        case 106:
+                            spr2.error.err_code = DLL_ERR_CODE.syntax_tag_error;
+                            spr2.error.message = "Syntax tag error";
+                            break;
+
+                        case 107:
+                            spr2.error.err_code = DLL_ERR_CODE.tag_end_error;
+                            spr2.error.message = "TAG END OR '>' ERROR";
+                            break;
+
+                        case 108:
+                            spr2.error.err_code = DLL_ERR_CODE.tag_value_invalid;
+                            spr2.error.message = "TAG VALUE INVALID ERROR";
+                            break;
+
+                        case 111:
+                            spr2.error.err_code = DLL_ERR_CODE.text_not_found;
+                            spr2.error.message = "Text Not found";
+                            break;
+
+                        case 200:
+                            spr2.error.err_code = DLL_ERR_CODE.too_long_text;
+                            spr2.error.message = "Too long text";
+                            break;
+
+                        case 201:
+                            spr2.error.err_code = DLL_ERR_CODE.too_many_symbol;
+                            spr2.error.message = "Too many symbol";
+                            break;
+
+                        case 202:
+                            spr2.error.err_code = DLL_ERR_CODE.too_long_text_buffer_over;
+                            spr2.error.message = "Too long text and buffer over";
+                            break;
+
+                        case 203:
+                            spr2.error.err_code = DLL_ERR_CODE.out_of_heap_memory;
+                            spr2.error.message = "Out of heap memory";
+                            break;
+
+                        case 204:
+                            spr2.error.err_code = DLL_ERR_CODE.too_long_text_buffer_over;
+                            spr2.error.message = "Too long text and buffer over";
+                            break;
+                        default:
+                            spr2.error.err_code = DLL_ERR_CODE.OTHER_ERROR;
+                            break;
+
+                    }
                     return spr2;
                 }
                 byte[] wavdata = new byte[size]; //C#側で配列を確保。
@@ -104,7 +179,25 @@ namespace yukkuri_86_wrapper
             yukkuri_inter.AddEventListener_Dllload(dllldel);//delegateを突っ込む。
             yukkuri_inter.AddEventListener_Speak(spd);//delegateを突っ込む。
             yukkuri_inter.AddEventListener_close(cld);//delegateを突っ込む。
+            TimerCallback timerdelegate = new TimerCallback((Object o) =>
+              {
+                  try
+                  {
+                      yukkuri_inter.discardkun();
+                  }catch (System.Runtime.Remoting.RemotingException e)
+                  {
+                      cekun.Signal();
+                  }
+
+              });
+            Timer timer;
+
             yukkuri_inter.inited();//初期化完了イベントを発行。
+
+            Task task = Task.Run(() =>
+              {
+                             timer = new Timer(timerdelegate, null, 0, 3000);
+              });
             cekun.Wait();//閉じないように。
 
         }

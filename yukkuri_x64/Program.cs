@@ -42,27 +42,39 @@ namespace yukkuri_x64
             {
                 using (yukkuri_lib.yukkuri_lib yukkuri_qa = new yukkuri_lib.yukkuri_lib("Aquestalk\\jgr\\Aquestalk.dll", "test"))
                 {
+                    playaq(100, 100, "ほも", yukkuri_qa); 
+                    /*
+                    playaq(100, 100, "<hage", yukkuri_qa);
                     playaq(100, 100, "ほも", yukkuri_qa);
+                    playaq(100, 100, "ほも", yukkuri_qa);
+                    */
                 }
             }
-            catch (Wave_NULLException e)
+            catch (Exception e)
             {
-                Console.Error.WriteLine("NULL Error! " + e.Message);
+                Console.Error.WriteLine("Error! " + e.ToString());
             }
         }
         static void playaq(int speed,int pitch,string text,yukkuri_lib.yukkuri_lib yklib)
         {
-            byte[] wavdata = yklib.speak_wav(speed, text, pitch);
-            if (wavdata.Length==1)
+            try
             {
-                return;
-            }
-            using (MemoryStream memstr = new MemoryStream(wavdata))
-            {
-                using (SoundPlayer sp = new SoundPlayer(memstr))
+                byte[] wavdata = yklib.speak_wav(speed, text, pitch);
+                if (wavdata.Length == 1)
                 {
-                    sp.PlaySync();
+                    return;
                 }
+                using (MemoryStream memstr = new MemoryStream(wavdata))
+                {
+                    using (SoundPlayer sp = new SoundPlayer(memstr))
+                    {
+                        sp.PlaySync();
+                    }
+                }
+            }catch (Exception e)
+            {
+
+                Console.Error.WriteLine("Error! " + e.ToString());
             }
         }
     }

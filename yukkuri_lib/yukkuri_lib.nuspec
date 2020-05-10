@@ -2,7 +2,7 @@
 <package  xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>$id$</id>
-    <version>1.0.0.4</version>
+    <version>1.0.0.7</version>
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
@@ -12,7 +12,7 @@
     <iconUrl>https://raw.githubusercontent.com/kokkiemouse/yukkuri_lib/master/yukkuri_lib/yukkuri.png</iconUrl>
     <description>Aquestalkが64bitで使える。</description>
     <dependencies>
-      <dependency id="yukkuri_lib_interface" version="1.0.0.3" />
+      <dependency id="yukkuri_lib_interface" version="1.0.0.7" />
     </dependencies>
     <releaseNotes>test release.</releaseNotes>
     <copyright>Copyright kokkiemouse</copyright>
